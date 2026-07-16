@@ -103,7 +103,11 @@ class InkbirdCoordinator:
 
     async def async_start(self) -> None:
         self._stop.clear()
-        self._run_task = self.hass.async_create_task(self._run())
+        # Background task so the persistent connection loop never blocks
+        # Home Assistant startup (bootstrap does not wait on it).
+        self._run_task = self.hass.async_create_background_task(
+            self._run(), name="inkbird_int14bw connection loop"
+        )
 
     async def async_stop(self) -> None:
         self._stop.set()
