@@ -12,6 +12,10 @@ custom firmware required.**
 > for extra range — the integration uses Home Assistant's built-in Bluetooth
 > stack, so it automatically uses whichever path can reach your thermometer.
 
+An optional ready-made **Cook Control dashboard** is included ([`dashboard/`](dashboard/)):
+
+![Cook Control dashboard](dashboard/screenshot.png)
+
 | Entity | Description |
 |---|---|
 | `sensor.int_14_bw_probe_1` … `probe_4` | Temperature of each probe |

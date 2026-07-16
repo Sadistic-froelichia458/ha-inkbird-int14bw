@@ -4,8 +4,23 @@ A ready-made "Cook Control" Lovelace dashboard for the Inkbird INT-14-BW —
 radial probe gauges that change colour by doneness, editable per-probe targets,
 one-tap recipe presets, a °C/°F toggle, and target-reached alerts.
 
+![Cook Control dashboard](screenshot.png)
+
 > Open [`concept.html`](concept.html) in any browser for an interactive live
 > preview of the design (temperatures are simulated).
+
+## The two files, and why you need both
+
+This dashboard is made of **two** files that do very different jobs:
+
+| File | What it is | Where it goes | What it does |
+|---|---|---|---|
+| [`inkbird_package.yaml`](inkbird_package.yaml) | The **back-end** (the engine) | `<config>/packages/` | Creates the helpers and logic the dashboard needs: the target temperature per probe, probe names, the active-probe selector, the °C/°F toggle, the "apply recipe" script, and the **automation that sends an alert when a probe reaches its target**. You never see these directly. |
+| [`inkbird_dashboard.yaml`](inkbird_dashboard.yaml) | The **front-end** (what you see) | A Lovelace dashboard | The visual dashboard itself: the probe cards, radial gauges, recipe buttons, alerts panel. |
+
+**You need both, and the order matters:** add the package first (step 2), then the
+dashboard (step 3). The dashboard reads the helpers the package creates — without
+the package, the targets, recipe buttons, and °C/°F toggle have nothing to talk to.
 
 ## 1. Prerequisites
 

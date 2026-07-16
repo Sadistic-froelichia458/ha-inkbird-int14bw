@@ -1,7 +1,11 @@
-# Inkbird INT-14-BW — "Cook Control" Lovelace dashboard
-# ======================================================
+# Inkbird INT-14-BW — "Cook Control" dashboard  —  PART 2 of 2 (the FRONT-END)
+# ===========================================================================
+# This is the visible dashboard — the probe cards, gauges, recipe buttons.
+# It DEPENDS on PART 1 (inkbird_package.yaml): add that package first, or the
+# targets, recipe buttons and °C/°F toggle here will have nothing to talk to.
+#
 # A faithful recreation of the concept dashboard using custom:button-card
-# and card-mod (both from HACS → Frontend).
+# and card-mod (both from HACS → Frontend). Preview: see screenshot.png.
 #
 # HOW TO USE
 #   1. Install the required HACS frontend cards (see dashboard/README.md):

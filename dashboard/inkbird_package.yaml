@@ -1,5 +1,11 @@
-# Inkbird INT-14-BW dashboard package
-# =====================================
+# Inkbird INT-14-BW dashboard package  —  PART 1 of 2 (the BACK-END)
+# ===================================================================
+# This is the "engine" behind the Cook Control dashboard. It is NOT the
+# dashboard itself — it creates the helpers, script and alert automation the
+# dashboard needs (targets, probe names, active-probe selector, °C/°F toggle).
+# The visible dashboard is the other file: inkbird_dashboard.yaml (PART 2).
+# Add THIS file first, then the dashboard.
+#
 # Drop this file in <config>/packages/ and enable packages in configuration.yaml:
 #
 #   homeassistant:
