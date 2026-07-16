@@ -211,6 +211,12 @@ class InkbirdCoordinator:
         for i, off in enumerate(_PROBE_OFFSETS):
             self.data._raw[i] = parse_probe_temp(bytes(data), off)
         self.data.apply_mask()
+        _LOGGER.debug(
+            "FF01 %s -> probes=%s docked=%s",
+            data.hex(),
+            self.data.probes,
+            self.data.docked,
+        )
         if self.data.probes != prev:
             self._notify_listeners()
 
@@ -241,8 +247,10 @@ class InkbirdCoordinator:
             if frame_type == 0xFB and len(payload) == 6:
                 self._challenge = bytes(payload)
                 self._challenge_evt.set()
+                _LOGGER.debug("Auth challenge received")
             elif frame_type == 0xFC and payload and payload[0] == 0x00:
                 self._authed.set()
+                _LOGGER.debug("Auth accepted")
             i += 1 + flen
 
     @callback
