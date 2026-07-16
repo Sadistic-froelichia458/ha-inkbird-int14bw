@@ -1,0 +1,33 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "הוספת Inkbird INT-14-BW",
+        "description": "הזן את כתובת ה-Bluetooth (MAC) של המדחום. ניתן למצוא אותה באפליקציית Inkbird תחת Settings ← Device Information.\n\nמכשירים שזוהו עד כה: {discovered}",
+        "data": {
+          "address": "כתובת Bluetooth (MAC)"
+        }
+      },
+      "confirm": {
+        "title": "הוספת Inkbird INT-14-BW",
+        "description": "האם להוסיף את ה-Inkbird INT-14-BW בכתובת {address}?"
+      }
+    },
+    "error": {
+      "invalid_address": "זו לא נראית ככתובת MAC תקינה (הפורמט הצפוי הוא AA:BB:CC:DD:EE:FF)."
+    },
+    "abort": {
+      "already_configured": "המכשיר כבר מוגדר.",
+      "not_supported": "זהו אינו מכשיר Inkbird INT-14-BW נתמך."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "probe1": { "name": "בדיקה 1" },
+      "probe2": { "name": "בדיקה 2" },
+      "probe3": { "name": "בדיקה 3" },
+      "probe4": { "name": "בדיקה 4" }
+    }
+  }
+}

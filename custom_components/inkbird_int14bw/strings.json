@@ -1,0 +1,33 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Add Inkbird INT-14-BW",
+        "description": "Enter the Bluetooth MAC address of your thermometer. You can find it in the Inkbird app under Settings → Device Information.\n\nDevices seen so far: {discovered}",
+        "data": {
+          "address": "Bluetooth MAC address"
+        }
+      },
+      "confirm": {
+        "title": "Add Inkbird INT-14-BW",
+        "description": "Do you want to set up the Inkbird INT-14-BW at {address}?"
+      }
+    },
+    "error": {
+      "invalid_address": "That doesn't look like a valid Bluetooth MAC address (expected format AA:BB:CC:DD:EE:FF)."
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "not_supported": "This device is not a supported Inkbird INT-14-BW."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "probe1": { "name": "Probe 1" },
+      "probe2": { "name": "Probe 2" },
+      "probe3": { "name": "Probe 3" },
+      "probe4": { "name": "Probe 4" }
+    }
+  }
+}
