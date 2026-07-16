@@ -9,11 +9,32 @@ from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
 )
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_ADDRESS
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import format_mac
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
-from .const import DOMAIN, LOCAL_NAME, MODEL
+from .const import (
+    CONF_TEMP_UNIT,
+    DEFAULT_TEMP_UNIT,
+    DOMAIN,
+    LOCAL_NAME,
+    MODEL,
+    UNIT_AUTO,
+    UNIT_CELSIUS,
+    UNIT_FAHRENHEIT,
+)
 
 
 def _is_supported(info: BluetoothServiceInfoBleak) -> bool:
@@ -29,6 +50,12 @@ class InkbirdConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._discovered_address: str | None = None
         self._discovered_devices: dict[str, str] = {}
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        """Return the options flow (temperature unit)."""
+        return InkbirdOptionsFlow()
 
     async def async_step_bluetooth(
         self, discovery_info: BluetoothServiceInfoBleak
@@ -101,4 +128,33 @@ class InkbirdConfigFlow(ConfigFlow, domain=DOMAIN):
                 "discovered": ", ".join(self._discovered_devices.values())
                 or "none seen yet"
             },
+        )
+
+
+class InkbirdOptionsFlow(OptionsFlow):
+    """Options: choose the temperature unit for the probe sensors."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current = self.config_entry.options.get(CONF_TEMP_UNIT, DEFAULT_TEMP_UNIT)
+        unit_selector = SelectSelector(
+            SelectSelectorConfig(
+                mode=SelectSelectorMode.DROPDOWN,
+                translation_key="temperature_unit",
+                options=[
+                    SelectOptionDict(value=UNIT_AUTO, label="Follow Home Assistant"),
+                    SelectOptionDict(value=UNIT_CELSIUS, label="Celsius (°C)"),
+                    SelectOptionDict(value=UNIT_FAHRENHEIT, label="Fahrenheit (°F)"),
+                ],
+            )
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {vol.Required(CONF_TEMP_UNIT, default=current): unit_selector}
+            ),
         )

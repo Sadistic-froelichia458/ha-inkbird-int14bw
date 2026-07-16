@@ -22,6 +22,19 @@
       "not_supported": "This device is not a supported Inkbird INT-14-BW."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Inkbird INT-14-BW options",
+        "data": {
+          "temperature_unit": "Temperature unit"
+        },
+        "data_description": {
+          "temperature_unit": "Choose how probe temperatures are reported. \"Follow Home Assistant\" keeps the device's native °C and lets Home Assistant convert for display."
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "probe1": { "name": "Probe 1" },

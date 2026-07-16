@@ -32,6 +32,7 @@ from .const import (
     CHR_BATTERY,
     CHR_FF01,
     CHR_FF02,
+    CHR_FF03,
     NUM_PROBES,
 )
 
@@ -49,8 +50,17 @@ class InkbirdData:
     """Latest decoded values from the device."""
 
     def __init__(self) -> None:
+        # Exposed per-probe temperature; None while docked/charging or absent.
         self.probes: list[float | None] = [None] * NUM_PROBES
+        # Raw FF01 readings before dock masking.
+        self._raw: list[float | None] = [None] * NUM_PROBES
+        # docked[i] True => probe is charging in the base station, not in food.
+        self.docked: list[bool] = [False] * NUM_PROBES
         self.battery: int | None = None
+
+    def apply_mask(self) -> None:
+        for i in range(NUM_PROBES):
+            self.probes[i] = None if self.docked[i] else self._raw[i]
 
 
 class InkbirdCoordinator:
@@ -142,6 +152,10 @@ class InkbirdCoordinator:
             await client.start_notify(CHR_FF02, self._on_ff02)
             await client.start_notify(CHR_FF01, self._on_ff01)
             try:
+                await client.start_notify(CHR_FF03, self._on_ff03)
+            except Exception as err:  # noqa: BLE001
+                _LOGGER.debug("FF03 subscribe failed: %s", err)
+            try:
                 await client.start_notify(CHR_BATTERY, self._on_battery)
             except Exception as err:  # noqa: BLE001
                 _LOGGER.debug("Battery subscribe failed: %s", err)
@@ -193,13 +207,25 @@ class InkbirdCoordinator:
     @callback
     def _on_ff01(self, _char: BleakGATTCharacteristic, data: bytearray) -> None:
         self._last_rx = self.hass.loop.time()
-        changed = False
+        prev = list(self.data.probes)
         for i, off in enumerate(_PROBE_OFFSETS):
-            value = parse_probe_temp(bytes(data), off)
-            if value != self.data.probes[i]:
-                self.data.probes[i] = value
-                changed = True
-        if changed:
+            self.data._raw[i] = parse_probe_temp(bytes(data), off)
+        self.data.apply_mask()
+        if self.data.probes != prev:
+            self._notify_listeners()
+
+    @callback
+    def _on_ff03(self, _char: BleakGATTCharacteristic, data: bytearray) -> None:
+        # Dock/state channel: four [status, 0x10] pairs then a trailer.
+        # Per-probe status byte at offset i*2; bit 0x02 = docked/charging
+        # (0x01 = out of dock / in use, 0x03 = docked). Confirmed live.
+        self._last_rx = self.hass.loop.time()
+        prev = list(self.data.probes)
+        for i in range(NUM_PROBES):
+            if i * 2 < len(data):
+                self.data.docked[i] = bool(data[i * 2] & 0x02)
+        self.data.apply_mask()
+        if self.data.probes != prev:
             self._notify_listeners()
 
     @callback

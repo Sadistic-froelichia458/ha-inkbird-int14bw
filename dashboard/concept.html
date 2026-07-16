@@ -1,0 +1,689 @@
+<title>Inkbird INT-14-BW · Cook Control Dashboard</title>
+<style>
+  :root {
+    --bg: #16120f;
+    --surface: #211b16;
+    --surface-2: #2b231d;
+    --surface-3: #33291f;
+    --border: #3a2f27;
+    --border-bright: #4d3f33;
+    --text: #f5ede4;
+    --muted: #a89a8c;
+    --faint: #77695c;
+    --ember: #ff6a2c;
+    --ember-bright: #ff8a3d;
+    --cold: #5aa9e6;
+    --ready: #56c271;
+    --warning: #f2b441;
+    --critical: #e8503a;
+    --shadow: 0 18px 40px -18px rgba(0,0,0,.7);
+    --radius: 18px;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ece7e1;
+      --surface: #fbf9f6;
+      --surface-2: #f3efe9;
+      --surface-3: #ece5db;
+      --border: #ddd4c9;
+      --border-bright: #cabfb0;
+      --text: #251d15;
+      --muted: #6e6256;
+      --faint: #93877a;
+      --ember: #dd521a;
+      --ember-bright: #ff6a2c;
+      --cold: #2b7fc0;
+      --ready: #2f9d55;
+      --warning: #c98a12;
+      --critical: #cf3c26;
+      --shadow: 0 16px 34px -20px rgba(60,40,20,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16120f; --surface: #211b16; --surface-2: #2b231d; --surface-3: #33291f;
+    --border: #3a2f27; --border-bright: #4d3f33; --text: #f5ede4; --muted: #a89a8c;
+    --faint: #77695c; --ember: #ff6a2c; --ember-bright: #ff8a3d; --cold: #5aa9e6;
+    --ready: #56c271; --warning: #f2b441; --critical: #e8503a;
+    --shadow: 0 18px 40px -18px rgba(0,0,0,.7);
+  }
+  :root[data-theme="light"] {
+    --bg: #ece7e1; --surface: #fbf9f6; --surface-2: #f3efe9; --surface-3: #ece5db;
+    --border: #ddd4c9; --border-bright: #cabfb0; --text: #251d15; --muted: #6e6256;
+    --faint: #93877a; --ember: #dd521a; --ember-bright: #ff6a2c; --cold: #2b7fc0;
+    --ready: #2f9d55; --warning: #c98a12; --critical: #cf3c26;
+    --shadow: 0 16px 34px -20px rgba(60,40,20,.4);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 500px at 82% -8%, rgba(255,106,44,.10), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 22px 60px; }
+
+  /* ---------- top bar ---------- */
+  .topbar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark {
+    width: 46px; height: 46px; border-radius: 13px; flex: none;
+    background: linear-gradient(150deg, var(--ember-bright), var(--ember));
+    display: grid; place-items: center;
+    box-shadow: 0 6px 18px -6px var(--ember), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .brand h1 { font-size: 1.16rem; margin: 0; letter-spacing: -.01em; }
+  .brand .sub { font-size: .74rem; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; }
+  .topbar .spacer { flex: 1; }
+  .status-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 8px 13px; border-radius: 999px; font-size: .82rem; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .chip b { color: var(--text); font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.live { background: var(--ready); box-shadow: 0 0 0 0 rgba(86,194,113,.6); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(86,194,113,.5);} 70%{box-shadow:0 0 0 7px rgba(86,194,113,0);} 100%{box-shadow:0 0 0 0 rgba(86,194,113,0);} }
+
+  .theme-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    width: 40px; height: 40px; border-radius: 11px; cursor: pointer; font-size: 1.05rem;
+    display: grid; place-items: center;
+  }
+  .theme-btn:hover { border-color: var(--border-bright); color: var(--text); }
+
+  /* ---------- base station strip ---------- */
+  .station {
+    margin-top: 22px; display: grid; grid-template-columns: auto 1fr auto; gap: 26px;
+    align-items: center;
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 24px; box-shadow: var(--shadow);
+  }
+  .station-meta { display: flex; flex-direction: column; gap: 4px; }
+  .station-meta .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .16em; color: var(--faint); }
+  .station-meta .name { font-size: 1.28rem; font-weight: 650; letter-spacing: -.01em; }
+  .station-stats { display: flex; gap: 26px; flex-wrap: wrap; }
+  .stat .k { font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: var(--faint); }
+  .stat .v { font-family: var(--mono); font-size: 1.15rem; font-weight: 600; margin-top: 2px; }
+  .battery { display: inline-flex; align-items: center; gap: 9px; }
+  .batt-shell { width: 40px; height: 18px; border: 2px solid var(--muted); border-radius: 4px; position: relative; padding: 2px; }
+  .batt-shell::after { content:""; position:absolute; right:-5px; top:4px; width:3px; height:8px; background: var(--muted); border-radius: 0 2px 2px 0; }
+  .batt-fill { height: 100%; border-radius: 1px; background: var(--ready); }
+
+  /* ---------- section headings ---------- */
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin: 34px 2px 16px; }
+  .sec-head h2 { font-size: 1.02rem; margin: 0; letter-spacing: -.01em; }
+  .sec-head .hint { font-size: .8rem; color: var(--muted); }
+  .sec-head .rule { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+  /* ---------- probe grid ---------- */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  @media (max-width: 720px){ .grid { grid-template-columns: 1fr; } }
+
+  .probe {
+    position: relative; overflow: hidden;
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow);
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .probe[data-state="ready"] { border-color: color-mix(in srgb, var(--ready) 55%, var(--border)); }
+  .probe::before {
+    content:""; position:absolute; inset:0 0 auto 0; height: 3px;
+    background: var(--edge, var(--faint)); opacity: .9;
+  }
+  .probe-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .probe-badge {
+    width: 30px; height: 30px; border-radius: 9px; flex: none; display: grid; place-items: center;
+    font-family: var(--mono); font-weight: 700; font-size: .9rem;
+    background: var(--surface-3); color: var(--text); border: 1px solid var(--border-bright);
+  }
+  .probe-name { font-weight: 620; font-size: 1rem; letter-spacing: -.01em; }
+  .probe-name small { display:block; color: var(--muted); font-weight: 500; font-size: .76rem; letter-spacing: .02em; }
+  .pill {
+    margin-left: auto; font-size: .72rem; font-weight: 600; letter-spacing: .04em;
+    padding: 5px 11px; border-radius: 999px; text-transform: uppercase;
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  .pill.heating { color: var(--warning); background: color-mix(in srgb, var(--warning) 15%, transparent); border-color: color-mix(in srgb, var(--warning) 35%, transparent); }
+  .pill.close  { color: var(--ember); background: color-mix(in srgb, var(--ember) 15%, transparent); border-color: color-mix(in srgb, var(--ember) 40%, transparent); }
+  .pill.ready  { color: var(--ready); background: color-mix(in srgb, var(--ready) 16%, transparent); border-color: color-mix(in srgb, var(--ready) 42%, transparent); }
+  .pill.idle   { color: var(--faint); background: color-mix(in srgb, var(--faint) 14%, transparent); border-color: color-mix(in srgb, var(--faint) 30%, transparent); }
+
+  .probe-body { display: grid; grid-template-columns: 30px 122px 1fr; gap: 16px; align-items: center; margin-top: 12px; }
+  .probe-fig { align-self: stretch; display: flex; justify-content: center; }
+  .probe-fig svg { height: 150px; width: auto; }
+  .gauge { position: relative; width: 128px; height: 128px; }
+  .gauge svg { transform: rotate(135deg); }
+  .gauge .read {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1px;
+  }
+  .gauge .temp { font-family: var(--mono); font-size: 1.75rem; font-weight: 650; letter-spacing: -.02em; line-height: 1; }
+  .gauge .temp span { font-size: .9rem; color: var(--muted); }
+  .gauge .of { font-size: .72rem; color: var(--faint); font-family: var(--mono); }
+
+  .probe-side { display: flex; flex-direction: column; gap: 12px; }
+  .target-row { display: flex; align-items: center; gap: 10px; }
+  .target-row label { font-size: .74rem; text-transform: uppercase; letter-spacing: .12em; color: var(--faint); flex: 1; }
+  .target-input {
+    display: inline-flex; align-items: center; background: var(--surface-3);
+    border: 1px solid var(--border-bright); border-radius: 10px; overflow: hidden;
+  }
+  .target-input button {
+    border: none; background: transparent; color: var(--muted); width: 28px; height: 34px;
+    font-size: 1.1rem; cursor: pointer;
+  }
+  .target-input button:hover { color: var(--ember); background: var(--surface); }
+  .target-input input {
+    width: 46px; text-align: center; border: none; background: transparent; color: var(--text);
+    font-family: var(--mono); font-size: 1rem; font-weight: 600; padding: 6px 0;
+    -moz-appearance: textfield;
+  }
+  .target-input input::-webkit-outer-spin-button, .target-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .target-input .u { color: var(--faint); font-family: var(--mono); font-size: .82rem; padding-right: 9px; }
+
+  .spark { width: 100%; height: 38px; display: block; }
+  .assign { font-size: .76rem; color: var(--muted); }
+  .assign b { color: var(--ember); font-weight: 600; }
+
+  /* ---------- recipes ---------- */
+  .recipes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  @media (max-width: 860px){ .recipes { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 460px){ .recipes { grid-template-columns: 1fr; } }
+  .recipe {
+    text-align: left; cursor: pointer; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px; display: flex; flex-direction: column; gap: 8px;
+    transition: transform .15s, border-color .15s, background .15s;
+  }
+  .recipe:hover { transform: translateY(-3px); border-color: var(--border-bright); background: var(--surface-2); }
+  .recipe .ic { width: 34px; height: 34px; }
+  .recipe .r-name { font-weight: 620; font-size: .92rem; }
+  .recipe .r-temp { font-family: var(--mono); font-size: 1.15rem; font-weight: 650; color: var(--ember); }
+  .recipe .r-temp span { font-size: .74rem; color: var(--muted); }
+  .recipe .r-note { font-size: .74rem; color: var(--muted); }
+
+  /* ---------- alerts ---------- */
+  .alerts { display: flex; flex-direction: column; gap: 10px; }
+  .alert {
+    display: flex; align-items: center; gap: 13px;
+    background: var(--surface); border: 1px solid var(--border); border-left-width: 3px;
+    border-radius: 12px; padding: 13px 16px;
+  }
+  .alert.good { border-left-color: var(--ready); }
+  .alert.warn { border-left-color: var(--warning); }
+  .alert .a-ic { width: 30px; height: 30px; flex: none; display:grid; place-items:center; border-radius: 8px; }
+  .alert.good .a-ic { background: color-mix(in srgb, var(--ready) 18%, transparent); }
+  .alert.warn .a-ic { background: color-mix(in srgb, var(--warning) 18%, transparent); }
+  .alert .a-txt { flex: 1; font-size: .9rem; }
+  .alert .a-txt small { display: block; color: var(--muted); font-size: .76rem; margin-top: 1px; }
+  .alert .a-time { font-family: var(--mono); font-size: .78rem; color: var(--faint); }
+  .alerts .empty { color: var(--faint); font-size: .86rem; padding: 6px 2px; }
+
+  /* ---------- toast ---------- */
+  .toast-wrap { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 50; }
+  .toast {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface-2); border: 1px solid var(--border-bright);
+    border-left: 3px solid var(--ready);
+    border-radius: 12px; padding: 13px 16px; box-shadow: var(--shadow);
+    min-width: 250px; animation: slidein .35s cubic-bezier(.2,.9,.3,1);
+  }
+  @keyframes slidein { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+  .toast .t-txt { font-size: .88rem; }
+  .toast .t-txt small { display: block; color: var(--muted); font-size: .76rem; }
+
+  /* ---------- recipe → probe picker ---------- */
+  .picker-back {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(3px);
+    display: none; place-items: center; z-index: 60; padding: 20px;
+  }
+  .picker-back.open { display: grid; }
+  .picker {
+    background: var(--surface); border: 1px solid var(--border-bright); border-radius: 18px;
+    box-shadow: var(--shadow); padding: 22px; width: min(420px, 100%);
+    animation: slidein .28s cubic-bezier(.2,.9,.3,1);
+  }
+  .picker h3 { margin: 0 0 4px; font-size: 1.05rem; letter-spacing: -.01em; }
+  .picker .p-sub { color: var(--muted); font-size: .85rem; margin-bottom: 16px; }
+  .picker .p-sub b { color: var(--ember); }
+  .picker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pick {
+    display: flex; align-items: center; gap: 11px; cursor: pointer; text-align: left;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+    color: var(--text); transition: transform .12s, border-color .12s, background .12s;
+  }
+  .pick:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--border-bright); background: var(--surface-3); }
+  .pick:disabled { opacity: .45; cursor: not-allowed; }
+  .pick .pk-badge {
+    width: 30px; height: 30px; border-radius: 8px; flex: none; display: grid; place-items: center;
+    font-family: var(--mono); font-weight: 700; background: var(--surface-3); border: 1px solid var(--border-bright);
+  }
+  .pick .pk-name { font-size: .9rem; font-weight: 600; }
+  .pick .pk-cur { font-size: .74rem; color: var(--muted); font-family: var(--mono); }
+  .picker-cancel {
+    margin-top: 14px; width: 100%; background: transparent; border: 1px solid var(--border);
+    color: var(--muted); border-radius: 11px; padding: 10px; cursor: pointer; font-size: .86rem;
+  }
+  .picker-cancel:hover { color: var(--text); border-color: var(--border-bright); }
+
+  .footnote { margin-top: 40px; text-align: center; color: var(--faint); font-size: .8rem; }
+  .footnote code { font-family: var(--mono); color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#6c7075"/>
+    <stop offset="0.28" stop-color="#eef1f3"/>
+    <stop offset="0.5" stop-color="#c4c9ce"/>
+    <stop offset="0.72" stop-color="#eef1f3"/>
+    <stop offset="1" stop-color="#5c6065"/>
+  </linearGradient>
+  <linearGradient id="gloss" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#0c0c0e"/>
+    <stop offset="0.3" stop-color="#3a3a40"/>
+    <stop offset="0.5" stop-color="#141418"/>
+    <stop offset="0.75" stop-color="#2a2a30"/>
+    <stop offset="1" stop-color="#050506"/>
+  </linearGradient>
+  <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#8a8e93"/>
+    <stop offset="0.5" stop-color="#f2f4f6"/>
+    <stop offset="1" stop-color="#7a7e83"/>
+  </linearGradient>
+  <!-- mini probe for the base-station bay (9 wide x ~92 tall) -->
+  <g id="miniprobe">
+    <path d="M0.5 2 L8.5 2 L7 22 L2 22 Z" fill="url(#gloss)" stroke="#000" stroke-width="0.4"/>
+    <ellipse cx="4.5" cy="2" rx="4" ry="1.4" fill="url(#ring)"/>
+    <rect x="3" y="22" width="3" height="60" fill="url(#steel)"/>
+    <path d="M3 82 L6 82 L4.5 92 Z" fill="url(#steel)"/>
+  </g>
+</defs></svg>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3c1.5 2.5.5 4-.7 5.4C10 10 9 11.4 9 13.2A3 3 0 0 0 15 13.2c0-1.2-.5-2-1-2.8"/>
+          <path d="M12 21a5 5 0 0 0 5-5c0-1.6-.7-2.7-1.5-3.7"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Cook Control</h1>
+        <div class="sub">Inkbird INT-14-BW</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="status-chips">
+      <span class="chip"><span class="dot live"></span> Live · <b>via ESP32 proxy</b></span>
+      <span class="chip">Base battery <b id="baseBatt">78%</b></span>
+      <span class="chip" id="clock">--:--</span>
+    </div>
+    <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle light/dark theme">◐</button>
+  </div>
+
+  <!-- base station -->
+  <div class="station">
+    <div aria-hidden="true">
+      <svg width="172" height="158" viewBox="0 0 172 158" fill="none">
+        <!-- body with gold rim -->
+        <rect x="3" y="3" width="166" height="152" rx="24" fill="#0b0b0d" stroke="url(#ring)" stroke-width="3"/>
+        <rect x="9" y="9" width="154" height="140" rx="19" fill="#141416" stroke="#2a2a2e" stroke-width="1"/>
+        <!-- left probe bay -->
+        <rect x="18" y="20" width="66" height="104" rx="11" fill="#0a0a0c" stroke="#242428"/>
+        <g>
+          <!-- 4 probes standing in the bay -->
+          <g transform="translate(26,26)"><use href="#miniprobe"/><text x="4.5" y="14" font-family="ui-monospace,monospace" font-size="7" fill="#e8e8ea" text-anchor="middle">1</text></g>
+          <g transform="translate(40,26)"><use href="#miniprobe"/><text x="4.5" y="14" font-family="ui-monospace,monospace" font-size="7" fill="#e8e8ea" text-anchor="middle">2</text></g>
+          <g transform="translate(54,26)"><use href="#miniprobe"/><text x="4.5" y="14" font-family="ui-monospace,monospace" font-size="7" fill="#e8e8ea" text-anchor="middle">3</text></g>
+          <g transform="translate(68,26)"><use href="#miniprobe"/><text x="4.5" y="14" font-family="ui-monospace,monospace" font-size="7" fill="#9a9a9c" text-anchor="middle">4</text></g>
+        </g>
+        <!-- right LCD -->
+        <rect x="92" y="20" width="62" height="94" rx="10" fill="#050506" stroke="#242428"/>
+        <circle cx="123" cy="26" r="1.6" fill="var(--ready)"/>
+        <g font-family="ui-monospace,monospace" font-weight="700">
+          <text x="98" y="46" font-size="12" fill="#f4f4f6" letter-spacing="1">63</text>
+          <text x="98" y="63" font-size="12" fill="#f4f4f6" letter-spacing="1">57</text>
+          <text x="98" y="80" font-size="12" fill="#f4f4f6" letter-spacing="1">41</text>
+          <text x="98" y="97" font-size="11" fill="#55555a" letter-spacing="1">---</text>
+        </g>
+        <g fill="#8a8a8e" font-family="system-ui" font-size="4.5">
+          <text x="126" y="44">MEDIUM</text>
+          <text x="126" y="61">BEEF</text>
+          <text x="126" y="78">FISH</text>
+          <text x="126" y="95">CUSTOM</text>
+        </g>
+        <!-- wordmark + knob -->
+        <text x="123" y="128" font-family="system-ui" font-weight="700" font-size="9" fill="url(#ring)" text-anchor="middle" letter-spacing="1.5">INKBIRD</text>
+        <circle cx="63" cy="136" r="10" fill="#0a0a0c" stroke="url(#ring)" stroke-width="1.5"/>
+        <circle cx="63" cy="136" r="6" fill="#1a1a1e"/>
+      </svg>
+    </div>
+    <div class="station-meta">
+      <span class="label">Base station</span>
+      <span class="name">Backyard Smoker</span>
+      <div class="station-stats" style="margin-top:10px">
+        <div class="stat"><div class="k">Connection</div><div class="v">BLE 5.4</div></div>
+        <div class="stat"><div class="k">Probes linked</div><div class="v">3 / 4</div></div>
+        <div class="stat"><div class="k">Signal</div><div class="v">−54 dBm</div></div>
+      </div>
+    </div>
+    <div class="battery" title="Base battery">
+      <div class="batt-shell"><div class="batt-fill" style="width:78%"></div></div>
+      <span class="stat"><span class="v">78%</span></span>
+    </div>
+  </div>
+
+  <!-- probes -->
+  <div class="sec-head">
+    <h2>Probes</h2>
+    <span class="hint">Tap ± to set a target, or apply a recipe below</span>
+    <span class="rule"></span>
+  </div>
+  <div class="grid" id="probeGrid"></div>
+
+  <!-- recipes -->
+  <div class="sec-head">
+    <h2>Recipe presets</h2>
+    <span class="hint">One tap sets the probe name &amp; target temperature</span>
+    <span class="rule"></span>
+  </div>
+  <div class="recipes" id="recipeRail"></div>
+
+  <!-- alerts -->
+  <div class="sec-head">
+    <h2>Alerts</h2>
+    <span class="hint">Fires the moment a probe reaches its target</span>
+    <span class="rule"></span>
+  </div>
+  <div class="alerts" id="alertList"></div>
+
+  <div class="footnote">
+    Concept dashboard for the <code>inkbird_int14bw</code> Home Assistant integration ·
+    live values simulated for preview
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<div class="picker-back" id="pickerBack">
+  <div class="picker" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+    <h3 id="pickTitle">Apply recipe</h3>
+    <div class="p-sub" id="pickSub"></div>
+    <div class="picker-grid" id="pickGrid"></div>
+    <button class="picker-cancel" id="pickCancel">Cancel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = (s, r=document) => r.querySelector(s);
+
+  /* theme toggle */
+  const root = document.documentElement;
+  $("#themeBtn").addEventListener("click", () => {
+    const cur = root.getAttribute("data-theme")
+      || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    root.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  });
+
+  /* clock */
+  function tick(){
+    const d = new Date();
+    $("#clock").textContent = d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+  }
+  tick(); setInterval(tick, 10000);
+
+  const AMBIENT = 22;
+  const recipes = [
+    { name:"Beef Brisket", target:93, note:"Low & slow", color:"#b0442a" },
+    { name:"Chicken",      target:74, note:"Food-safe",  color:"#e0a23a" },
+    { name:"Medium Steak", target:57, note:"Pull temp",  color:"#c25a3c" },
+    { name:"Pork Ribs",    target:90, note:"Fall-off",   color:"#a9563b" },
+    { name:"Salmon",       target:52, note:"Just flaky", color:"#e07a52" },
+  ];
+
+  const probes = [
+    { id:1, name:"Brisket point", recipe:"Beef Brisket", target:93, temp:63.4, connected:true,  edge:"#b0442a", hist:[] },
+    { id:2, name:"Ribeye",        recipe:"Medium Steak", target:57, temp:55.9, connected:true,  edge:"#c25a3c", hist:[] },
+    { id:3, name:"Ambient",       recipe:"Grill air",    target:120, temp:118, connected:true,  edge:"#5aa9e6", hist:[] },
+    { id:4, name:"Probe 4",       recipe:"Not in use",   target:75, temp:null, connected:false, edge:"#77695c", hist:[] },
+  ];
+  probes.forEach(p => { for(let i=0;i<24;i++) p.hist.push(p.temp==null? null : p.temp - (24-i)*0.6 + (Math.random()-0.5)); });
+
+  const R = 52, C = 2 * Math.PI * R, ARC = 0.75; // 270deg gauge
+  const grid = $("#probeGrid");
+
+  // Accurate INT-14-BW probe: glossy black tapered handle (numbered),
+  // brushed-steel shaft, sharp point that glows the doneness colour.
+  function probeSVG(num, color, connected){
+    const tip = connected ? color : "var(--faint)";
+    const numFill = connected ? "#f0f0f2" : "#8a8a8c";
+    return `<svg viewBox="0 0 26 150" fill="none" aria-hidden="true">
+      <ellipse cx="13" cy="6" rx="7.5" ry="2.6" fill="url(#ring)"/>
+      <path d="M5.5 6 L20.5 6 L17 52 L9 52 Z" fill="url(#gloss)" stroke="#000" stroke-width="0.6"/>
+      <text x="13" y="30" text-anchor="middle" font-family="ui-monospace,monospace" font-weight="700" font-size="10" fill="${numFill}">${num}</text>
+      <rect x="8.5" y="52" width="9" height="4" rx="1" fill="url(#ring)"/>
+      <rect x="10" y="56" width="6" height="82" fill="url(#steel)"/>
+      <path d="M10 138 L16 138 L13 150 Z" fill="${tip}" ${connected?`style="filter:drop-shadow(0 0 4px ${color})"`:""}/>
+    </svg>`;
+  }
+
+  function stateOf(p){
+    if(!p.connected) return {key:"idle", label:"Not connected"};
+    const d = p.target - p.temp;
+    if(d <= 0)  return {key:"ready", label:"Ready"};
+    if(d <= 5)  return {key:"close", label:"Almost there"};
+    return {key:"heating", label:"Heating"};
+  }
+  function edgeColor(p){
+    if(!p.connected) return "var(--faint)";
+    const st = stateOf(p).key;
+    if(st==="ready") return "var(--ready)";
+    if(st==="close") return "var(--ember)";
+    return "var(--warning)";
+  }
+  function sparkPath(hist){
+    const vals = hist.filter(v=>v!=null);
+    if(vals.length<2) return "";
+    const min = Math.min(...vals)-1, max = Math.max(...vals)+1, span = max-min || 1;
+    const W=210, H=34;
+    return hist.map((v,i)=>{
+      const x = (i/(hist.length-1))*W;
+      const y = v==null? H : H - ((v-min)/span)*H;
+      return (i===0?"M":"L") + x.toFixed(1) + " " + y.toFixed(1);
+    }).join(" ");
+  }
+
+  function render(){
+    grid.innerHTML = "";
+    probes.forEach(p => {
+      const st = stateOf(p);
+      const edge = edgeColor(p);
+      const pct = p.connected ? Math.max(0, Math.min(1, (p.temp-AMBIENT)/(p.target-AMBIENT))) : 0;
+      const dash = (C*ARC*pct).toFixed(1) + " " + C;
+      const tempTxt = p.connected ? Math.round(p.temp*10)/10 : "—";
+
+      const el = document.createElement("div");
+      el.className = "probe";
+      el.dataset.state = st.key;
+      el.style.setProperty("--edge", edge);
+      el.innerHTML = `
+        <div class="probe-top">
+          <div class="probe-badge">P${p.id}</div>
+          <div class="probe-name">${p.name}<small>${p.recipe}</small></div>
+          <span class="pill ${st.key}">${st.label}</span>
+        </div>
+        <div class="probe-body">
+          <div class="probe-fig">${probeSVG(p.id, edge, p.connected)}</div>
+          <div class="gauge">
+            <svg width="128" height="128" viewBox="0 0 128 128">
+              <circle cx="64" cy="64" r="${R}" fill="none" stroke="var(--surface-3)" stroke-width="9"
+                      stroke-linecap="round" stroke-dasharray="${(C*ARC).toFixed(1)} ${C}"/>
+              <circle cx="64" cy="64" r="${R}" fill="none" stroke="${edge}" stroke-width="9"
+                      stroke-linecap="round" stroke-dasharray="${dash}"
+                      style="transition:stroke-dasharray .6s ease, stroke .4s"/>
+            </svg>
+            <div class="read">
+              <div class="temp">${tempTxt}<span>°C</span></div>
+              <div class="of">${p.connected? "target "+p.target+"°" : "no probe"}</div>
+            </div>
+          </div>
+          <div class="probe-side">
+            <div class="target-row">
+              <label>Target</label>
+              <div class="target-input">
+                <button data-act="dec" data-id="${p.id}" aria-label="Lower target">−</button>
+                <input type="number" value="${p.target}" data-id="${p.id}" aria-label="Target temperature for ${p.name}">
+                <button data-act="inc" data-id="${p.id}" aria-label="Raise target">+</button>
+                <span class="u">°C</span>
+              </div>
+            </div>
+            <svg class="spark" viewBox="0 0 210 34" preserveAspectRatio="none">
+              <path d="${sparkPath(p.hist)}" fill="none" stroke="${edge}" stroke-width="2"
+                    stroke-linejoin="round" stroke-linecap="round" opacity="${p.connected?1:.3}"/>
+            </svg>
+            <div class="assign">${p.connected
+              ? (st.key==="ready" ? `Reached target — resting` : `${Math.max(0,Math.round((p.target-p.temp)*10)/10)}° to go`)
+              : `Insert a probe to begin`}</div>
+          </div>
+        </div>`;
+      grid.appendChild(el);
+    });
+    bindTargets();
+  }
+
+  function bindTargets(){
+    grid.querySelectorAll("button[data-act]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const p = probes.find(x=>x.id==b.dataset.id);
+        p.target += (b.dataset.act==="inc"?1:-1);
+        p.target = Math.max(0, Math.min(300, p.target));
+        p.firedReady = false;
+        render();
+      });
+    });
+    grid.querySelectorAll("input[data-id]").forEach(inp=>{
+      inp.addEventListener("change", ()=>{
+        const p = probes.find(x=>x.id==inp.dataset.id);
+        const v = parseInt(inp.value,10);
+        if(!isNaN(v)){ p.target = Math.max(0, Math.min(300, v)); p.firedReady=false; render(); }
+      });
+    });
+  }
+
+  /* recipes */
+  const rail = $("#recipeRail");
+  const cook = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v6M12 3v6M16 3v4a4 4 0 0 1-8 0"/><path d="M12 9v12"/></svg>`;
+  recipes.forEach(r=>{
+    const b = document.createElement("button");
+    b.className = "recipe";
+    b.innerHTML = `
+      <span style="color:${r.color}">${cook}</span>
+      <span class="r-name">${r.name}</span>
+      <span class="r-temp">${r.target}<span>°C</span></span>
+      <span class="r-note">${r.note}</span>`;
+    b.addEventListener("click", ()=> openPicker(r));
+    rail.appendChild(b);
+  });
+
+  /* probe picker for applying a recipe */
+  const pickerBack = $("#pickerBack");
+  let pendingRecipe = null;
+  function openPicker(r){
+    pendingRecipe = r;
+    $("#pickSub").innerHTML = `Set <b>${r.name}</b> · target ${r.target}°C — choose a probe:`;
+    const g = $("#pickGrid");
+    g.innerHTML = "";
+    probes.forEach(p=>{
+      const btn = document.createElement("button");
+      btn.className = "pick";
+      btn.disabled = !p.connected;
+      btn.innerHTML = `<span class="pk-badge">P${p.id}</span>
+        <span><span class="pk-name">${p.name}</span><br>
+        <span class="pk-cur">${p.connected? "now "+Math.round(p.temp)+"° → "+p.target+"°" : "no probe"}</span></span>`;
+      btn.addEventListener("click", ()=> applyRecipe(p));
+      g.appendChild(btn);
+    });
+    pickerBack.classList.add("open");
+  }
+  function closePicker(){ pickerBack.classList.remove("open"); pendingRecipe = null; }
+  function applyRecipe(p){
+    const r = pendingRecipe;
+    p.name = r.name; p.recipe = "Recipe · "+r.name; p.target = r.target;
+    p.edge = r.color; p.firedReady = false;
+    toast("Recipe applied", `${r.name} → Probe ${p.id} · target ${r.target}°C`);
+    closePicker();
+    render();
+  }
+  $("#pickCancel").addEventListener("click", closePicker);
+  pickerBack.addEventListener("click", (e)=>{ if(e.target===pickerBack) closePicker(); });
+  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closePicker(); });
+
+  /* alerts + toast */
+  const alertList = $("#alertList");
+  const alerts = [
+    { cls:"warn", title:"Ribeye approaching target", sub:"55.9° of 57°C — 1° to go", time:"now" },
+  ];
+  function renderAlerts(){
+    if(!alerts.length){ alertList.innerHTML = `<div class="empty">No alerts. Everything's on track.</div>`; return; }
+    alertList.innerHTML = alerts.map(a=>`
+      <div class="alert ${a.cls}">
+        <div class="a-ic">${a.cls==="good"
+          ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ready)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`
+          : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>`}
+        </div>
+        <div class="a-txt">${a.title}<small>${a.sub}</small></div>
+        <div class="a-time">${a.time}</div>
+      </div>`).join("");
+  }
+  function toast(title, sub){
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.innerHTML = `<div class="a-ic" style="display:grid;place-items:center;width:26px;height:26px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ready)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div><div class="t-txt">${title}<small>${sub}</small></div>`;
+    $("#toastWrap").appendChild(t);
+    setTimeout(()=>{ t.style.opacity="0"; t.style.transform="translateX(30px)"; t.style.transition="all .4s"; }, 3600);
+    setTimeout(()=> t.remove(), 4100);
+  }
+
+  /* simulated live cook */
+  function step(){
+    probes.forEach(p=>{
+      if(!p.connected) return;
+      if(p.temp < p.target) p.temp = Math.min(p.target + 0.4, p.temp + Math.random()*0.5 + 0.15);
+      else p.temp += (Math.random()-0.5)*0.15;
+      p.hist.push(p.temp); if(p.hist.length>24) p.hist.shift();
+
+      const st = stateOf(p);
+      if(st.key==="ready" && !p.firedReady){
+        p.firedReady = true;
+        alerts.unshift({ cls:"good", title:`${p.name} is ready`,
+          sub:`Reached ${p.target}°C target`, time:"now" });
+        if(alerts.length>5) alerts.pop();
+        toast(`${p.name} ready 🔥`, `Hit target ${p.target}°C`);
+        renderAlerts();
+      }
+    });
+    render();
+  }
+
+  render(); renderAlerts();
+  setInterval(step, 2600);
+})();
+</script>

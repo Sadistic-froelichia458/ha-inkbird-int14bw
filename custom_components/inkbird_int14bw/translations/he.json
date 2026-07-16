@@ -22,12 +22,25 @@
       "not_supported": "זהו אינו מכשיר Inkbird INT-14-BW נתמך."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "הגדרות Inkbird INT-14-BW",
+        "data": {
+          "temperature_unit": "יחידת טמפרטורה"
+        },
+        "data_description": {
+          "temperature_unit": "בחר כיצד יוצגו טמפרטורות הפרובים. \"לפי Home Assistant\" משאיר את יחידת המקור °C ונותן ל-Home Assistant להמיר לתצוגה."
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
-      "probe1": { "name": "בדיקה 1" },
-      "probe2": { "name": "בדיקה 2" },
-      "probe3": { "name": "בדיקה 3" },
-      "probe4": { "name": "בדיקה 4" }
+      "probe1": { "name": "פרוב 1" },
+      "probe2": { "name": "פרוב 2" },
+      "probe3": { "name": "פרוב 3" },
+      "probe4": { "name": "פרוב 4" }
     }
   }
 }

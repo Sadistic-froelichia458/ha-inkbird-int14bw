@@ -1,0 +1,176 @@
+# Inkbird INT-14-BW dashboard package
+# =====================================
+# Drop this file in <config>/packages/ and enable packages in configuration.yaml:
+#
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# It creates the helpers, recipe script, and target-reached alert automations
+# the Cook Control dashboard uses. Restart Home Assistant after adding it.
+#
+# ── Adjust these entity IDs if yours differ ──────────────────────────────────
+# The dashboard and automations below reference the probe/battery sensors as:
+#   sensor.int_14_bw_probe_1 … _4   and   sensor.int_14_bw_battery
+# Change them here and in inkbird_dashboard.yaml to match your setup.
+
+input_number:
+  inkbird_target_1:
+    name: Probe 1 target
+    min: 0
+    max: 300
+    step: 1
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer-alert
+    initial: 93
+  inkbird_target_2:
+    name: Probe 2 target
+    min: 0
+    max: 300
+    step: 1
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer-alert
+    initial: 57
+  inkbird_target_3:
+    name: Probe 3 target
+    min: 0
+    max: 300
+    step: 1
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer-alert
+    initial: 120
+  inkbird_target_4:
+    name: Probe 4 target
+    min: 0
+    max: 300
+    step: 1
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer-alert
+    initial: 75
+
+input_text:
+  inkbird_name_1:
+    name: Probe 1 name
+    initial: Brisket
+  inkbird_name_2:
+    name: Probe 2 name
+    initial: Ribeye
+  inkbird_name_3:
+    name: Probe 3 name
+    initial: Ambient
+  inkbird_name_4:
+    name: Probe 4 name
+    initial: Probe 4
+
+input_select:
+  inkbird_active_probe:
+    name: Active probe
+    icon: mdi:target
+    options:
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+    initial: "1"
+  inkbird_unit:
+    name: Temperature unit
+    icon: mdi:thermometer
+    options:
+      - "°C"
+      - "°F"
+    initial: "°C"
+
+script:
+  inkbird_apply_recipe:
+    alias: Inkbird — apply recipe to active probe
+    icon: mdi:silverware-fork-knife
+    mode: parallel
+    fields:
+      label:
+        description: Recipe name to store as the probe's name
+      target:
+        description: Target temperature in °C
+    sequence:
+      - variables:
+          idx: "{{ states('input_select.inkbird_active_probe') }}"
+      - service: input_number.set_value
+        target:
+          entity_id: "input_number.inkbird_target_{{ idx }}"
+        data:
+          value: "{{ target | float }}"
+      - service: input_text.set_value
+        target:
+          entity_id: "input_text.inkbird_name_{{ idx }}"
+        data:
+          value: "{{ label }}"
+
+template:
+  - sensor:
+      # Per-probe cook state: idle / heating / close / ready.
+      # The dashboard reads these to colour each card.
+      - name: "Inkbird Probe 1 State"
+        unique_id: inkbird_probe_1_state
+        state: >
+          {% set t = states('sensor.int_14_bw_probe_1') | float(none) %}
+          {% set g = states('input_number.inkbird_target_1') | float(0) %}
+          {% if t is none %}idle
+          {% elif t >= g %}ready
+          {% elif g - t <= 5 %}close
+          {% else %}heating{% endif %}
+      - name: "Inkbird Probe 2 State"
+        unique_id: inkbird_probe_2_state
+        state: >
+          {% set t = states('sensor.int_14_bw_probe_2') | float(none) %}
+          {% set g = states('input_number.inkbird_target_2') | float(0) %}
+          {% if t is none %}idle
+          {% elif t >= g %}ready
+          {% elif g - t <= 5 %}close
+          {% else %}heating{% endif %}
+      - name: "Inkbird Probe 3 State"
+        unique_id: inkbird_probe_3_state
+        state: >
+          {% set t = states('sensor.int_14_bw_probe_3') | float(none) %}
+          {% set g = states('input_number.inkbird_target_3') | float(0) %}
+          {% if t is none %}idle
+          {% elif t >= g %}ready
+          {% elif g - t <= 5 %}close
+          {% else %}heating{% endif %}
+      - name: "Inkbird Probe 4 State"
+        unique_id: inkbird_probe_4_state
+        state: >
+          {% set t = states('sensor.int_14_bw_probe_4') | float(none) %}
+          {% set g = states('input_number.inkbird_target_4') | float(0) %}
+          {% if t is none %}idle
+          {% elif t >= g %}ready
+          {% elif g - t <= 5 %}close
+          {% else %}heating{% endif %}
+
+automation:
+  - alias: Inkbird — probe reached target
+    id: inkbird_probe_reached_target
+    mode: parallel
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.inkbird_probe_1_state
+          - sensor.inkbird_probe_2_state
+          - sensor.inkbird_probe_3_state
+          - sensor.inkbird_probe_4_state
+        to: "ready"
+    action:
+      - variables:
+          idx: "{{ trigger.entity_id.split('_')[2] }}"
+          pname: "{{ states('input_text.inkbird_name_' ~ idx) }}"
+          ptemp: "{{ states('sensor.int_14_bw_probe_' ~ idx) }}"
+          ptarget: "{{ states('input_number.inkbird_target_' ~ idx) }}"
+      - service: persistent_notification.create
+        data:
+          title: "🔥 {{ pname }} is ready"
+          message: >
+            Probe {{ idx }} reached its target of {{ ptarget | int }}°C
+            (now {{ ptemp }}°C).
+          notification_id: "inkbird_ready_{{ idx }}"
+      # Uncomment to also push to your phone (replace with your notify service):
+      # - service: notify.mobile_app_your_phone
+      #   data:
+      #     title: "🔥 {{ pname }} is ready"
+      #     message: "Probe {{ idx }} hit {{ ptarget | int }}°C."

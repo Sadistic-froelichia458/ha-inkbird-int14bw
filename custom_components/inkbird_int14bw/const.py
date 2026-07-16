@@ -14,3 +14,10 @@ MANUFACTURER = "Inkbird"
 MODEL = "INT-14-BW"
 
 NUM_PROBES = 4
+
+# Options
+CONF_TEMP_UNIT = "temperature_unit"
+UNIT_AUTO = "auto"
+UNIT_CELSIUS = "celsius"
+UNIT_FAHRENHEIT = "fahrenheit"
+DEFAULT_TEMP_UNIT = UNIT_AUTO

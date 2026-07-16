@@ -35,7 +35,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: InkbirdConfigEntry) -> b
     entry.runtime_data = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
+
+
+async def _async_update_listener(
+    hass: HomeAssistant, entry: InkbirdConfigEntry
+) -> None:
+    """Reload the entry when options (e.g. temperature unit) change."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: InkbirdConfigEntry) -> bool:

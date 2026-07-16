@@ -14,12 +14,32 @@ custom firmware required.**
 
 | Entity | Description |
 |---|---|
-| `sensor.int_14_bw_probe_1` … `probe_4` | Temperature of each probe (°C) |
+| `sensor.int_14_bw_probe_1` … `probe_4` | Temperature of each probe |
 | `sensor.int_14_bw_battery` | Base-station battery level (%) |
 
 Sensors update in real time (roughly every few seconds) while the thermometer
 is on and in range, and switch to **unavailable** when it is powered off or out
 of range.
+
+A probe that is **sitting in the base station charging** reports no reading —
+only probes actually pulled out and in use show a temperature. (The integration
+reads the device's per-probe dock state to tell the difference.)
+
+### Temperature unit (°C / °F)
+
+Probe temperatures are read from the device in °C. Open the integration's
+**Configure** button (Settings → Devices & Services → Inkbird INT-14-BW →
+Configure) to choose:
+
+- **Follow Home Assistant** (default) — keep °C and let Home Assistant convert
+  to your unit system for display; per-entity overrides still work.
+- **Celsius** / **Fahrenheit** — force a specific unit on the probe sensors.
+
+### Want a dashboard?
+
+A ready-made "Cook Control" dashboard — radial probe gauges, editable targets,
+recipe presets, a °C/°F toggle, and ready-alerts — lives in
+[`dashboard/`](dashboard/). See [dashboard/README.md](dashboard/README.md).
 
 ---
 

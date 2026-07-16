@@ -21,7 +21,15 @@ from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceIn
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import InkbirdConfigEntry
-from .const import DOMAIN, MANUFACTURER, MODEL, NUM_PROBES
+from .const import (
+    CONF_TEMP_UNIT,
+    DEFAULT_TEMP_UNIT,
+    DOMAIN,
+    MANUFACTURER,
+    MODEL,
+    NUM_PROBES,
+    UNIT_FAHRENHEIT,
+)
 from .coordinator import InkbirdCoordinator
 
 
@@ -64,8 +72,9 @@ async def async_setup_entry(
     """Set up Inkbird sensors from a config entry."""
     coordinator = entry.runtime_data
     address = entry.data[CONF_ADDRESS].upper()
+    unit = entry.options.get(CONF_TEMP_UNIT, DEFAULT_TEMP_UNIT)
     async_add_entities(
-        InkbirdSensor(coordinator, address, description)
+        InkbirdSensor(coordinator, address, description, unit)
         for description in SENSOR_DESCRIPTIONS
     )
 
@@ -81,6 +90,7 @@ class InkbirdSensor(SensorEntity):
         coordinator: InkbirdCoordinator,
         address: str,
         description: InkbirdSensorDescription,
+        unit: str,
     ) -> None:
         self.coordinator = coordinator
         self.entity_description = description
@@ -92,10 +102,23 @@ class InkbirdSensor(SensorEntity):
             model=MODEL,
             name=f"{MODEL} ({address})",
         )
+        # For temperature probes, honour an explicit Fahrenheit choice.
+        # "auto"/"celsius" keep the device's native °C — with device_class
+        # temperature, Home Assistant still converts °C to the user's unit
+        # system for display, and per-entity overrides remain available.
+        self._to_fahrenheit = (
+            unit == UNIT_FAHRENHEIT
+            and description.device_class == SensorDeviceClass.TEMPERATURE
+        )
+        if self._to_fahrenheit:
+            self._attr_native_unit_of_measurement = UnitOfTemperature.FAHRENHEIT
 
     @property
     def native_value(self) -> float | int | None:
-        return self.entity_description.value_fn(self.coordinator)
+        value = self.entity_description.value_fn(self.coordinator)
+        if value is None or not self._to_fahrenheit:
+            return value
+        return round(value * 9 / 5 + 32, 1)
 
     @property
     def available(self) -> bool:
