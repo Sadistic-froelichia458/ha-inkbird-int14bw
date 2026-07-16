@@ -100,7 +100,7 @@ class InkbirdSensor(SensorEntity):
             identifiers={(DOMAIN, address)},
             manufacturer=MANUFACTURER,
             model=MODEL,
-            name=f"{MODEL} ({address})",
+            name=MODEL,
         )
         # For temperature probes, honour an explicit Fahrenheit choice.
         # "auto"/"celsius" keep the device's native °C — with device_class
