@@ -45,8 +45,14 @@ _LOGGER = logging.getLogger(__name__)
 _PROBE_OFFSETS = (0, 4, 8, 12)
 _AMBIENT_OFFSETS = (2, 6, 10, 14)
 
-# How long we tolerate no notifications before treating the link as dead.
-_STALL_TIMEOUT = 90
+# How long we tolerate no notifications before treating the link as dead and
+# re-resolving the best available Bluetooth source (local adapter or proxy).
+# Kept short: a stale-but-still-"connected" link through a proxy that has
+# fallen out of range (e.g. walking from one room to another with two
+# proxies) should be dropped quickly so Home Assistant can hand the
+# connection to a better-positioned scanner, rather than sitting on a dead
+# link for a long time first.
+_STALL_TIMEOUT = 30
 
 
 class InkbirdData:
