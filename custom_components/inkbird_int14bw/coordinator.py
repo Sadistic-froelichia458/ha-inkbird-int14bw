@@ -181,6 +181,7 @@ class InkbirdCoordinator:
                 _LOGGER.debug("FF03 subscribe failed: %s", err)
             try:
                 await client.start_notify(CHR_BATTERY, self._on_battery)
+                _LOGGER.debug("Battery characteristic subscribed OK")
             except Exception as err:  # noqa: BLE001
                 _LOGGER.debug("Battery subscribe failed: %s", err)
 
@@ -279,6 +280,12 @@ class InkbirdCoordinator:
             elif frame_type == 0xFC and payload and payload[0] == 0x00:
                 self._authed.set()
                 _LOGGER.debug("Auth accepted")
+            else:
+                _LOGGER.debug(
+                    "FF02 unhandled frame type=0x%02x payload=%s",
+                    frame_type,
+                    payload.hex(),
+                )
             i += 1 + flen
 
     @callback
