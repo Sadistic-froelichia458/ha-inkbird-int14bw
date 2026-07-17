@@ -4,8 +4,12 @@ from __future__ import annotations
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_ADDRESS, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.const import (
+    CONF_ADDRESS,
+    EVENT_HOMEASSISTANT_STOP,
+    Platform,
+)
+from homeassistant.core import Event, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from homeassistant.components import bluetooth
@@ -36,6 +40,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: InkbirdConfigEntry) -> b
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
+    # Stop the connection loop promptly on HA shutdown so it doesn't delay it.
+    async def _on_stop(_event: Event) -> None:
+        await coordinator.async_stop()
+
+    entry.async_on_unload(
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _on_stop)
+    )
     return True
 
 
