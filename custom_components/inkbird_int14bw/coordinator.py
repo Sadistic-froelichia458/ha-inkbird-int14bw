@@ -181,9 +181,15 @@ class InkbirdCoordinator:
                 _LOGGER.debug("FF03 subscribe failed: %s", err)
             try:
                 await client.start_notify(CHR_BATTERY, self._on_battery)
-                _LOGGER.debug("Battery characteristic subscribed OK")
+                # The device doesn't reliably push an unsolicited battery
+                # notification right after subscribing; the characteristic
+                # also supports plain reads, so fetch an initial value
+                # explicitly instead of waiting for a notify that may not come.
+                initial = await client.read_gatt_char(CHR_BATTERY)
+                self._apply_battery(initial)
+                _LOGGER.debug("Battery initial read: %s", initial.hex())
             except Exception as err:  # noqa: BLE001
-                _LOGGER.debug("Battery subscribe failed: %s", err)
+                _LOGGER.debug("Battery subscribe/read failed: %s", err)
 
             await asyncio.sleep(0.3)
             await client.write_gatt_char(CHR_FF02, build_challenge_request(), response=False)
@@ -291,6 +297,9 @@ class InkbirdCoordinator:
     @callback
     def _on_battery(self, _char: BleakGATTCharacteristic, data: bytearray) -> None:
         self._last_rx = self.hass.loop.time()
+        self._apply_battery(data)
+
+    def _apply_battery(self, data: bytes | bytearray) -> None:
         if data and data[0] != 0x7F:
             value = min(data[0], 100)
             if value != self.data.battery:
