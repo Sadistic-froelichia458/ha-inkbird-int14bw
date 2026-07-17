@@ -1,0 +1,63 @@
+name: Bug report
+description: Something isn't working with the Inkbird INT-14-BW integration
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill in as much as
+        you can — logs and versions make issues far quicker to resolve.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you start
+      options:
+        - label: I have **fully closed the Inkbird phone app** (a BLE thermometer allows only one connection at a time).
+          required: true
+        - label: The thermometer is powered on with a probe inserted (it stops advertising when idle).
+          required: true
+        - label: I'm on the latest release of this integration.
+          required: true
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      placeholder: e.g. v1.1.0
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: e.g. 2026.7.1
+    validations:
+      required: true
+  - type: dropdown
+    id: bluetooth_path
+    attributes:
+      label: Bluetooth path
+      options:
+        - Local Bluetooth adapter
+        - ESPHome Bluetooth proxy
+        - Both / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Debug logs
+      description: |
+        Add this to configuration.yaml, restart, reproduce, then paste the log:
+        ```yaml
+        logger:
+          logs:
+            custom_components.inkbird_int14bw: debug
+        ```
+      render: text
