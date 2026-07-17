@@ -40,7 +40,11 @@
       "probe1": { "name": "Probe 1" },
       "probe2": { "name": "Probe 2" },
       "probe3": { "name": "Probe 3" },
-      "probe4": { "name": "Probe 4" }
+      "probe4": { "name": "Probe 4" },
+      "probe1_ambient": { "name": "Probe 1 ambient" },
+      "probe2_ambient": { "name": "Probe 2 ambient" },
+      "probe3_ambient": { "name": "Probe 3 ambient" },
+      "probe4_ambient": { "name": "Probe 4 ambient" }
     }
   }
 }

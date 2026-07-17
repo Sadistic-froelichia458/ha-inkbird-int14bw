@@ -40,7 +40,11 @@
       "probe1": { "name": "פרוב 1" },
       "probe2": { "name": "פרוב 2" },
       "probe3": { "name": "פרוב 3" },
-      "probe4": { "name": "פרוב 4" }
+      "probe4": { "name": "פרוב 4" },
+      "probe1_ambient": { "name": "פרוב 1 סביבתי" },
+      "probe2_ambient": { "name": "פרוב 2 סביבתי" },
+      "probe3_ambient": { "name": "פרוב 3 סביבתי" },
+      "probe4_ambient": { "name": "פרוב 4 סביבתי" }
     }
   }
 }

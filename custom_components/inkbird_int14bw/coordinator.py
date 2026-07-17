@@ -38,9 +38,12 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# Probe internal-temperature byte offsets within the FF01 notification,
-# confirmed live against known temperatures (see auth.parse_probe_temp).
+# FF01 byte offsets. Each probe reports two temperatures: the tip/internal
+# reading and an ambient reading (the grill/oven air around the probe). The
+# frame is four [internal, ambient] LE16 pairs, confirmed live against known
+# temperatures (see auth.parse_probe_temp).
 _PROBE_OFFSETS = (0, 4, 8, 12)
+_AMBIENT_OFFSETS = (2, 6, 10, 14)
 
 # How long we tolerate no notifications before treating the link as dead.
 _STALL_TIMEOUT = 90
@@ -50,17 +53,21 @@ class InkbirdData:
     """Latest decoded values from the device."""
 
     def __init__(self) -> None:
-        # Exposed per-probe temperature; None while docked/charging or absent.
+        # Exposed per-probe temperatures; None while docked/charging or absent.
         self.probes: list[float | None] = [None] * NUM_PROBES
+        self.ambient: list[float | None] = [None] * NUM_PROBES
         # Raw FF01 readings before dock masking.
         self._raw: list[float | None] = [None] * NUM_PROBES
+        self._raw_ambient: list[float | None] = [None] * NUM_PROBES
         # docked[i] True => probe is charging in the base station, not in food.
         self.docked: list[bool] = [False] * NUM_PROBES
         self.battery: int | None = None
 
     def apply_mask(self) -> None:
         for i in range(NUM_PROBES):
-            self.probes[i] = None if self.docked[i] else self._raw[i]
+            masked = self.docked[i]
+            self.probes[i] = None if masked else self._raw[i]
+            self.ambient[i] = None if masked else self._raw_ambient[i]
 
 
 class InkbirdCoordinator:
@@ -110,13 +117,26 @@ class InkbirdCoordinator:
         )
 
     async def async_stop(self) -> None:
+        """Cleanly stop the connection loop so reload/disable never hang.
+
+        Must not raise: HA calls this from async_unload_entry, and any
+        exception there makes reloading or disabling the entry require a full
+        restart instead.
+        """
         self._stop.set()
-        if self._run_task:
-            self._run_task.cancel()
+        task = self._run_task
+        self._run_task = None
+        if task is not None:
+            task.cancel()
+            # CancelledError is a BaseException, so it is NOT caught by
+            # suppress(Exception) — catch it explicitly.
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        client = self._client
+        self._client = None
+        if client is not None:
             with contextlib.suppress(Exception):
-                await self._run_task
-        if self._client and self._client.is_connected:
-            await self._client.disconnect()
+                await asyncio.wait_for(client.disconnect(), timeout=5)
 
     # ---- connection loop --------------------------------------------------
 
@@ -211,17 +231,21 @@ class InkbirdCoordinator:
     @callback
     def _on_ff01(self, _char: BleakGATTCharacteristic, data: bytearray) -> None:
         self._last_rx = self.hass.loop.time()
-        prev = list(self.data.probes)
+        prev = (list(self.data.probes), list(self.data.ambient))
+        raw = bytes(data)
         for i, off in enumerate(_PROBE_OFFSETS):
-            self.data._raw[i] = parse_probe_temp(bytes(data), off)
+            self.data._raw[i] = parse_probe_temp(raw, off)
+        for i, off in enumerate(_AMBIENT_OFFSETS):
+            self.data._raw_ambient[i] = parse_probe_temp(raw, off)
         self.data.apply_mask()
         _LOGGER.debug(
-            "FF01 %s -> probes=%s docked=%s",
+            "FF01 %s -> probes=%s ambient=%s docked=%s",
             data.hex(),
             self.data.probes,
+            self.data.ambient,
             self.data.docked,
         )
-        if self.data.probes != prev:
+        if (list(self.data.probes), list(self.data.ambient)) != prev:
             self._notify_listeners()
 
     @callback

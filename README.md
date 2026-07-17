@@ -16,9 +16,19 @@ An optional ready-made **Cook Control dashboard** is included ([`dashboard/`](da
 
 ![Cook Control dashboard](dashboard/screenshot.png)
 
+> [!IMPORTANT]
+> **The Inkbird phone app and this integration cannot both be connected at
+> once — this works in both directions.** A Bluetooth LE thermometer accepts
+> only one connection at a time. While the Inkbird app is connected (even in
+> the background), Home Assistant cannot connect; and while Home Assistant is
+> connected, the Inkbird app will not. **Fully close the Inkbird app** (swipe
+> it away, don't just background it) for the integration to work, and expect to
+> lose the integration's connection whenever you open the app.
+
 | Entity | Description |
 |---|---|
-| `sensor.int_14_bw_probe_1` … `probe_4` | Temperature of each probe |
+| `sensor.int_14_bw_probe_1` … `probe_4` | Tip temperature of each probe |
+| `sensor.int_14_bw_probe_1_ambient` … | Ambient (grill/oven air) temperature per probe — **disabled by default**, enable per probe when smoking/grilling |
 | `sensor.int_14_bw_battery` | Base-station battery level (%) |
 
 Sensors update in real time (roughly every few seconds) while the thermometer

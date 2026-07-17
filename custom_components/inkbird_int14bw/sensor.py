@@ -51,8 +51,24 @@ def _probe_description(index: int) -> InkbirdSensorDescription:
     )
 
 
+def _ambient_description(index: int) -> InkbirdSensorDescription:
+    # Each probe also reports the ambient (grill/oven air) temperature around
+    # its tip. Off by default to keep the entity list tidy; enable per probe
+    # when monitoring pit/oven temperature.
+    return InkbirdSensorDescription(
+        key=f"probe{index + 1}_ambient",
+        translation_key=f"probe{index + 1}_ambient",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_registry_enabled_default=False,
+        value_fn=lambda c, i=index: c.data.ambient[i],
+    )
+
+
 SENSOR_DESCRIPTIONS: tuple[InkbirdSensorDescription, ...] = (
     *(_probe_description(i) for i in range(NUM_PROBES)),
+    *(_ambient_description(i) for i in range(NUM_PROBES)),
     InkbirdSensorDescription(
         key="battery",
         device_class=SensorDeviceClass.BATTERY,
